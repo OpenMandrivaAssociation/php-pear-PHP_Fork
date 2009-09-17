@@ -8,7 +8,7 @@
 Summary:	%{_pearname} - Wrapper for pcntl_fork() with Java-like API
 Name:		php-pear-%{_pearname}
 Version:	0.3.0
-Release:	%mkrel 9
+Release:	%mkrel 10
 License:	PHP License
 Group:		Development/PHP
 Source0:	http://pear.php.net/get/%{_pearname}-%{version}.tar.bz2
@@ -16,6 +16,8 @@ URL:		http://pear.php.net/package/PHP_Fork/
 Requires(post): php-pear
 Requires(preun): php-pear
 Requires:	php-pear
+Requires:	php-shmop
+Requires:	php-pcntl
 BuildArch:	noarch
 BuildRequires:	dos2unix
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-buildroot
