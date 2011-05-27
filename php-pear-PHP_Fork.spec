@@ -6,7 +6,7 @@
 
 Name:		php-pear-%{upstream_name}
 Version:	0.3.1
-Release:	%mkrel 1
+Release:	%mkrel 2
 Summary:	Wrapper for pcntl_fork() with Java-like API
 License:	PHP License
 Group:		Development/PHP
