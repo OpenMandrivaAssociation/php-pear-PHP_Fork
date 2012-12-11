@@ -1,25 +1,29 @@
 %define		_class		PHP
 %define		_subclass	Fork
-%define		upstream_name	%{_class}_%{_subclass}
+%define		_status		beta
+%define		_pearname	%{_class}_%{_subclass}
 
+%if %{_use_internal_dependency_generator}
+%define __noautoreq 'pear(Snoopy.class.php)'
+%else
 %define		_requires_exceptions pear(Snoopy.class.php)
+%endif
 
-Name:		php-pear-%{upstream_name}
-Version:	0.3.1
-Release:	%mkrel 3
-Summary:	Wrapper for pcntl_fork() with Java-like API
+Summary:	%{_pearname} - Wrapper for pcntl_fork() with Java-like API
+Name:		php-pear-%{_pearname}
+Version:	0.3.0
+Release:	11
 License:	PHP License
 Group:		Development/PHP
+Source0:	http://pear.php.net/get/%{_pearname}-%{version}.tar.bz2
 URL:		http://pear.php.net/package/PHP_Fork/
-Source0:	http://download.pear.php.net/package/%{upstream_name}-%{version}.tgz
 Requires(post): php-pear
 Requires(preun): php-pear
 Requires:	php-pear
 Requires:	php-shmop
 Requires:	php-pcntl
 BuildArch:	noarch
-BuildRequires:	php-pear
-BuildRoot:	%{_tmppath}/%{name}-%{version}
+BuildRequires:	dos2unix
 
 %description
 PHP_Fork class. Wrapper around the pcntl_fork() stuff with a API set
@@ -43,42 +47,102 @@ $value must be a variable or a serializable object.
 Resources (db connections, streams, etc.) cannot be serialized and so
 they're not correctly handled.
 
+In PEAR status of this package is: %{_status}.
+
 %prep
+
 %setup -q -c
-mv package.xml %{upstream_name}-%{version}/%{upstream_name}.xml
+
+find . -type d -perm 0700 -exec chmod 755 {} \;
+find . -type f -perm 0555 -exec chmod 755 {} \;
+find . -type f -perm 0444 -exec chmod 644 {} \;
+
+for i in `find . -type d -name CVS` `find . -type f -name .cvs\*` `find . -type f -name .#\*`; do
+    if [ -e "$i" ]; then rm -rf $i; fi >&/dev/null
+done
+
+# strip away annoying ^M
+find -type f | grep -v ".gif" | grep -v ".png" | grep -v ".jpg" | xargs dos2unix
 
 %install
-rm -rf %{buildroot}
+install -d %{buildroot}%{_datadir}/pear/%{_class}
 
-cd %{upstream_name}-%{version}
-pear install --nodeps --packagingroot %{buildroot} %{upstream_name}.xml
-rm -rf %{buildroot}%{_datadir}/pear/.??*
-
-rm -rf %{buildroot}%{_datadir}/pear/docs
-rm -rf %{buildroot}%{_datadir}/pear/tests
+install %{_pearname}-%{version}/*.php %{buildroot}%{_datadir}/pear/%{_class}
 
 install -d %{buildroot}%{_datadir}/pear/packages
-install -m 644 %{upstream_name}.xml %{buildroot}%{_datadir}/pear/packages
-
-%clean
-rm -rf %{buildroot}
+install -m0644 package.xml %{buildroot}%{_datadir}/pear/packages/%{_pearname}.xml
 
 %post
-%if %mdkversion < 201000
-pear install --nodeps --soft --force --register-only \
-    %{_datadir}/pear/packages/%{upstream_name}.xml >/dev/null || :
-%endif
+if [ "$1" = "1" ]; then
+	if [ -x %{_bindir}/pear -a -f %{_datadir}/pear/packages/%{_pearname}.xml ]; then
+		%{_bindir}/pear install --nodeps -r %{_datadir}/pear/packages/%{_pearname}.xml
+	fi
+fi
+if [ "$1" = "2" ]; then
+	if [ -x %{_bindir}/pear -a -f %{_datadir}/pear/packages/%{_pearname}.xml ]; then
+		%{_bindir}/pear upgrade -f --nodeps -r %{_datadir}/pear/packages/%{_pearname}.xml
+	fi
+fi
 
 %preun
-%if %mdkversion < 201000
-if [ "$1" -eq "0" ]; then
-    pear uninstall --nodeps --ignore-errors --register-only \
-        %{upstream_name} >/dev/null || :
+if [ "$1" = 0 ]; then
+	if [ -x %{_bindir}/pear -a -f %{_datadir}/pear/packages/%{_pearname}.xml ]; then
+		%{_bindir}/pear uninstall --nodeps -r %{_pearname}
+	fi
 fi
-%endif
 
 %files
-%defattr(-,root,root)
-%doc %{upstream_name}-%{version}/examples
-%{_datadir}/pear/%{_class}
-%{_datadir}/pear/packages/%{upstream_name}.xml
+%defattr(644,root,root,755)
+%doc %{_pearname}-%{version}/examples
+%{_datadir}/pear/%{_class}/*.php
+%{_datadir}/pear/packages/%{_pearname}.xml
+
+
+
+
+%changelog
+* Fri Sep 18 2009 Raphaël Gertz <rapsys@mandriva.org> 0.3.0-10mdv2010.0
++ Revision: 444211
+- Add requires
+
+* Tue Sep 15 2009 Thierry Vignaud <tvignaud@mandriva.com> 0.3.0-9mdv2010.0
++ Revision: 441559
+- rebuild
+
+* Thu Jul 17 2008 Oden Eriksson <oeriksson@mandriva.com> 0.3.0-8mdv2009.0
++ Revision: 237051
+- rebuild
+
+  + Olivier Blin <oblin@mandriva.com>
+    - restore BuildRoot
+
+  + Thierry Vignaud <tvignaud@mandriva.com>
+    - kill re-definition of %%buildroot on Pixel's request
+
+
+* Sat Nov 11 2006 Oden Eriksson <oeriksson@mandriva.com> 0.3.0-7mdv2007.0
++ Revision: 82519
+- Import php-pear-PHP_Fork
+
+* Fri Feb 10 2006 Oden Eriksson <oeriksson@mandriva.com> 0.3.0-7mdk
+- new group (Development/PHP)
+
+* Fri Aug 26 2005 Oden Eriksson <oeriksson@mandriva.com> 0.3.0-6mdk
+- rebuilt to fix auto deps
+
+* Wed Aug 10 2005 Oden Eriksson <oeriksson@mandriva.com> 0.3.0-5mdk
+- rebuilt to use new pear auto deps/reqs from pld
+
+* Sun Jul 31 2005 Oden Eriksson <oeriksson@mandriva.com> 0.3.0-4mdk
+- fix deps
+
+* Thu Jul 21 2005 Oden Eriksson <oeriksson@mandriva.com> 0.3.0-3mdk
+- reworked the %%post and %%preun stuff, like in conectiva
+- fix deps
+
+* Wed Jul 20 2005 Oden Eriksson <oeriksson@mandriva.com> 0.3.0-2mdk
+- fix deps
+
+* Tue Jul 19 2005 Oden Eriksson <oeriksson@mandriva.com> 0.3.0-1mdk
+- initial Mandriva package (PLD import)
+
