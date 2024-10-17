@@ -16,7 +16,7 @@ Release:	12
 License:	PHP License
 Group:		Development/PHP
 Source0:	http://pear.php.net/get/%{_pearname}-%{version}.tar.bz2
-URL:		http://pear.php.net/package/PHP_Fork/
+URL:		https://pear.php.net/package/PHP_Fork/
 Requires(post): php-pear
 Requires(preun): php-pear
 Requires:	php-pear
